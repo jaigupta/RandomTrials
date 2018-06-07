@@ -2,7 +2,10 @@ var mongoose = require('mongoose');
 
 module.exports = mongoose.model(
   'User', {
-    facebookId: String,
-    displayName: String
+    facebookID: String,
+    displayName: String,
+    googleID: String,
+    imageUrl: String,
+    googleRefreshToken: String,
   }
 );

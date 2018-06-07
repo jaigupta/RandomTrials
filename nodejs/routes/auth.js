@@ -1,5 +1,6 @@
 var express = require('express');
 var passport = require('passport');
+var FB = require('fb');
 
 var router = express.Router();
 
@@ -21,14 +22,23 @@ router.get('/signout', isAuthenticated, function(req, res) {
 
 router.get('/facebook', passport.authenticate('facebook'));
 router.get('/facebook/callback',
-  passport.authenticate('facebook', {failureRedirect: '/auth/login'}),
+  passport.authenticate('facebook', {
+    failureRedirect: '/auth/login'
+  }),
   function(req, res) {
-    res.redirect('/');
+    res.send('Facebook login succeeded! Welcome ' + req.user.displayName);
   });
 
-router.get('/profile', isAuthenticated, function(req, res) {
-  res.send('Welcome ' + req.user.displayName + '!');
-});
+router.get('/google', passport.authenticate('google', {
+  scope: ['profile']
+}));
+router.get('/google/callback',
+  passport.authenticate('google', {
+    failureRedirect: '/login'
+  }),
+  function(req, res) {
+    res.send('Google login succeeded! Welcome ' + req.user.displayName);
+  }
+);
 
 module.exports = router;
-

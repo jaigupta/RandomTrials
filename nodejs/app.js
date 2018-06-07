@@ -5,8 +5,13 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var passport = require('passport');
 var FacebookStrategy = require('passport-facebook').Strategy;
+var GoogleStrategy = require('passport-google-oauth20').Strategy;
 var session = require('express-session');
 var mongoose = require('mongoose');
+const {
+  google
+} = require('googleapis');
+const googleConfig = require('./config/google');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -24,33 +29,79 @@ app.set('view engine', 'ejs');
 app.use(logger('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({
+  extended: false
+}));
 app.use(express.json());
-app.use(session({secret: 'test', resave: true, saveUninitialized: true}));
+app.use(session({
+  secret: 'test',
+  resave: true,
+  saveUninitialized: true
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new FacebookStrategy({
-    clientID: '177711686272026',
-    clientSecret: '1db94105ede10ab7b63aa1496b0c32f9',
-    callbackURL: 'http://localhost:3000/auth/facebook/callback'
-  }, function(accessToken, refreshToken, profile, cb) {
+  clientID: '177711686272026',
+  clientSecret: '1db94105ede10ab7b63aa1496b0c32f9',
+  callbackURL: 'http://localhost:3000/auth/facebook/callback'
+}, function(accessToken, refreshToken, profile, cb) {
+  FB.setAccessToken(accessToken);
+  console.log(profile);
+  var user = new User({
+    facebookID: profile.id,
+    displayName: profile.displayName
+  });
+  user.save(function(err) {
+    console.log(err);
+    console.log(JSON.stringify(user));
+    cb(err, user);
+  });
+}));
+
+passport.use(new GoogleStrategy({
+    clientID: googleConfig.clientID,
+    clientSecret: googleConfig.clientSecret,
+    callbackURL: googleConfig.callbackURL
+  },
+  function(accessToken, refreshToken, profile, cb) {
     console.log(profile);
-    var user = new User({facebookId: profile.id, displayName: profile.displayName});
-    user.save(function(err) {
-      console.log(err);
-      console.log(JSON.stringify(user));
-      cb(err, user);
+    User.findOne({
+      googleID: profile.id
+    }, function(err, user) {
+      if (!user) {
+        var imageUrl = '';
+        if (profile.photos.length > 0) {
+          imageUrl = profile.photos[0].value;
+        }
+        var user = new User({
+          facebookID: 'UNKNOWN',
+          googleID: profile.id,
+          displayName: profile.displayName,
+          imageUrl: imageUrl
+        });
+        user.save(function(err) {
+          cb(err, user);
+        });
+      } else {
+        cb(err, user);
+      }
     });
   }
 ));
 
 passport.serializeUser(function(user, done) {
-  done(null, user.facebookId);
+  done(null, 'g-' + user.googleID);
 });
 
 passport.deserializeUser(function(id, done) {
-  User.findOne({facebookId: id}, function(err, user) {
+  var query = {};
+  if (id.startsWith('g-')) {
+    query.googleID = id.substring(2, id.length);
+  } else if (id.startsWith('f-')) {
+    query.facebookID = id.substring(2, id.length);
+  }
+  User.findOne(query, function(err, user) {
     console.log('Found user: ' + user);
     done(err, user);
   });
@@ -63,7 +114,6 @@ app.use('/auth', authRouter);
 mongoose.connect(dbConfig.url);
 mongoose.Promise = global.Promise;
 mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
-
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
