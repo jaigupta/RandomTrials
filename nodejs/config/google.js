@@ -1,5 +1,5 @@
 module.exports = {
-  clientID: '894382305923-q315qrvipmigdf1mh0dhr0qjhj9ke2ce.apps.googleusercontent.com',
-  clientSecret: 'W2lfnpnvMimTIoPjUMIbP0AZ',
-  callbackURL: 'http://localhost:3000/auth/google/callback',
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: process.env.GOOGLE_CALLBACK_URL
 };

@@ -1,6 +1,7 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
+var dotenv = require('dotenv').config();
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var passport = require('passport');
@@ -8,16 +9,15 @@ var FacebookStrategy = require('passport-facebook').Strategy;
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
 var session = require('express-session');
 var mongoose = require('mongoose');
-const {
-  google
-} = require('googleapis');
+const google = require('googleapis').google;
 const googleConfig = require('./config/google');
+const fbConfig = require('./config/fb');
+const dbConfig = require('./config/db');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var authRouter = require('./routes/auth');
 
-var dbConfig = require('./config/db');
 var User = require('./models/user');
 
 var app = express();
@@ -28,7 +28,7 @@ app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cookieParser());
+lpp.use(cookieParser());
 app.use(express.urlencoded({
   extended: false
 }));
@@ -42,9 +42,9 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new FacebookStrategy({
-  clientID: '177711686272026',
-  clientSecret: '1db94105ede10ab7b63aa1496b0c32f9',
-  callbackURL: 'http://localhost:3000/auth/facebook/callback'
+  clientID: FB_CLIENT_ID,
+  clientSecret: FB_CLIENT_SECRET,
+  callbackURL: FB_CALLBACK_URL
 }, function(accessToken, refreshToken, profile, cb) {
   FB.setAccessToken(accessToken);
   console.log(profile);
