@@ -2,8 +2,12 @@
 <head>
 </head>
 <body>
+
+<% include ../../partials/header.ejs %>
+
 <% gmailThreads.forEach(function(thread) {  %>
     <li><%= thread.snippet %></li>
     <% }); %>
+
 </body>
 </html>
