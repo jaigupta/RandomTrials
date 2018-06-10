@@ -1,0 +1,58 @@
+<html>
+
+<head>
+  <title>Code Editor</title>
+  <style>
+    table#fileList {
+      background-color: white;
+    }
+
+    td {
+      padding-right: 10px;
+    }
+
+    td:hover {
+      background-color: grey;
+    }
+
+    div.CodeMirror {
+      height: auto;
+      width: 100%;
+      font-size: 18px;
+      border-style: solid;
+      border-color: #999999;
+      border-width: 2px;
+    }
+  </style>
+  <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
+  <link rel="stylesheet" href="node_modules/codemirror/theme/solarized.css">
+</head>
+
+<body>
+  <table id="tablist" cellspacing="0">
+    <tr>
+      <td><a onclick="switchFile('File.a')">File.a</a></td>
+      <td><a onclick="switchFile('File.b')">File.b</a></td>
+    </tr>
+  </table>
+  <br/>
+  <textarea class="CodeMirror" id="editor" height="100%" width="100%">
+    function myScript() {}
+  </textarea>
+
+  <script>
+    var CodeMirror = require('codemirror');
+    require("codemirror/mode/javascript/javascript");
+    var codeobj = CodeMirror.fromTextArea(
+      document.getElementById('editor'), {
+        mode: "javascript",
+        theme: "solarized light",
+        indentWithTabs: false,
+        lineNumbers: true,
+        lineWrapping: true
+      });
+  </script>
+
+</body>
+
+</html>
