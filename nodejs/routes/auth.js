@@ -1,10 +1,11 @@
 var express = require('express');
 var passport = require('passport');
 var FB = require('fb');
+var googleConfig = require('../config/google');
+var google = require('googleapis').google;
+var router = express.Router()
 
-var router = express.Router();
-
-function isAuthenticated(req, res, next) {
+router.isAuthenticated = function(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
@@ -15,7 +16,7 @@ router.get('/login', function(req, res, next) {
   res.render('login');
 });
 
-router.get('/signout', isAuthenticated, function(req, res) {
+router.get('/signout', router.isAuthenticated, function(req, res) {
   req.logOut();
   res.redirect('/');
 });
@@ -30,15 +31,16 @@ router.get('/facebook/callback',
   });
 
 router.get('/google', passport.authenticate('google', {
-  scope: ['profile']
+  scope: ['profile', 'https://www.googleapis.com/auth/drive']
 }));
 router.get('/google/callback',
   passport.authenticate('google', {
-    failureRedirect: '/login'
+    failureRedirect: '/auth/login'
   }),
   function(req, res) {
-    res.send('Google login succeeded! Welcome ' + req.user.displayName);
-  }
-);
+    console.log(req);
+    res.redirect('/auth/profile');
+  });
+
 
 module.exports = router;

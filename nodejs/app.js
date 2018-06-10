@@ -17,6 +17,7 @@ const dbConfig = require('./config/db');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var authRouter = require('./routes/auth');
+var driveRouter = require('./routes/drive');
 
 var User = require('./models/user');
 
@@ -28,7 +29,7 @@ app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
-lpp.use(cookieParser());
+app.use(cookieParser());
 app.use(express.urlencoded({
   extended: false
 }));
@@ -42,9 +43,9 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new FacebookStrategy({
-  clientID: FB_CLIENT_ID,
-  clientSecret: FB_CLIENT_SECRET,
-  callbackURL: FB_CALLBACK_URL
+  clientID: process.env.FB_CLIENT_ID,
+  clientSecret: process.env.FB_CLIENT_SECRET,
+  callbackURL: process.env.FB_CALLBACK_URL
 }, function(accessToken, refreshToken, profile, cb) {
   FB.setAccessToken(accessToken);
   console.log(profile);
@@ -65,27 +66,22 @@ passport.use(new GoogleStrategy({
     callbackURL: googleConfig.callbackURL
   },
   function(accessToken, refreshToken, profile, cb) {
-    console.log(profile);
-    User.findOne({
+    console.log('Checking if user exists.');
+    var query = {
       googleID: profile.id
+    };
+    var user = {
+      googleID: profile.id,
+      displayName: profile.displayName,
+      imageUrl: imageUrl,
+      googleRefreshToken: refreshToken
+    };
+    var imageUrl = (profile.photos.length > 0) ?
+      profile.photos[0].value : '';
+    User.findOneAndUpdate(query, user, {
+      upsert: true
     }, function(err, user) {
-      if (!user) {
-        var imageUrl = '';
-        if (profile.photos.length > 0) {
-          imageUrl = profile.photos[0].value;
-        }
-        var user = new User({
-          facebookID: 'UNKNOWN',
-          googleID: profile.id,
-          displayName: profile.displayName,
-          imageUrl: imageUrl
-        });
-        user.save(function(err) {
-          cb(err, user);
-        });
-      } else {
-        cb(err, user);
-      }
+      cb(err, user);
     });
   }
 ));
@@ -110,6 +106,7 @@ passport.deserializeUser(function(id, done) {
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
+app.use('/drive', driveRouter);
 
 mongoose.connect(dbConfig.url);
 mongoose.Promise = global.Promise;
