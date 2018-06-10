@@ -31,7 +31,11 @@ router.get('/facebook/callback',
   });
 
 router.get('/google', passport.authenticate('google', {
-  scope: ['profile', 'https://www.googleapis.com/auth/drive']
+  scope: [
+    'profile',
+    'https://www.googleapis.com/auth/drive',
+    'https://mail.google.com/'
+  ]
 }));
 router.get('/google/callback',
   passport.authenticate('google', {

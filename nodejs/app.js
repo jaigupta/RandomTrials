@@ -48,14 +48,11 @@ passport.use(new FacebookStrategy({
   callbackURL: process.env.FB_CALLBACK_URL
 }, function(accessToken, refreshToken, profile, cb) {
   FB.setAccessToken(accessToken);
-  console.log(profile);
   var user = new User({
     facebookID: profile.id,
     displayName: profile.displayName
   });
   user.save(function(err) {
-    console.log(err);
-    console.log(JSON.stringify(user));
     cb(err, user);
   });
 }));
@@ -66,7 +63,6 @@ passport.use(new GoogleStrategy({
     callbackURL: googleConfig.callbackURL
   },
   function(accessToken, refreshToken, profile, cb) {
-    console.log('Checking if user exists.');
     var query = {
       googleID: profile.id
     };
@@ -98,7 +94,6 @@ passport.deserializeUser(function(id, done) {
     query.facebookID = id.substring(2, id.length);
   }
   User.findOne(query, function(err, user) {
-    console.log('Found user: ' + user);
     done(err, user);
   });
 });
@@ -107,6 +102,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 app.use('/drive', driveRouter);
+app.use('/gmail', require('./routes/gmail'));
 
 mongoose.connect(dbConfig.url);
 mongoose.Promise = global.Promise;
