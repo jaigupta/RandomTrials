@@ -23,34 +23,119 @@
       border-color: #999999;
       border-width: 2px;
     }
+
+    .cm-trailingspace {
+      background: red;
+      opacity: 0.4;
+    }
   </style>
   <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
   <link rel="stylesheet" href="node_modules/codemirror/theme/solarized.css">
+  <link rel="stylesheet" href="node_modules/codemirror/addon/hint/show-hint.css">
 </head>
 
 <body>
-  <table id="tablist" cellspacing="0">
-    <tr>
-      <td><a onclick="switchFile('File.a')">File.a</a></td>
-      <td><a onclick="switchFile('File.b')">File.b</a></td>
-    </tr>
-  </table>
-  <br/>
   <textarea class="CodeMirror" id="editor" height="100%" width="100%">
-    function myScript() {}
+function myScript() {
+}
   </textarea>
 
   <script>
     var CodeMirror = require('codemirror');
     require("codemirror/mode/javascript/javascript");
-    var codeobj = CodeMirror.fromTextArea(
+    require("codemirror/mode/htmlmixed/htmlmixed");
+    require("codemirror/mode/clike/clike");
+    require("codemirror/mode/css/css");
+    require("codemirror/addon/dialog/dialog");
+    require("codemirror/addon/search/searchcursor");
+    require("codemirror/addon/search/search");
+    require("codemirror/addon/search/jump-to-line");
+    require("codemirror/addon/search/matchesonscrollbar");
+    require("codemirror/addon/edit/matchbrackets");
+    require("codemirror/addon/edit/closebrackets");
+    require("codemirror/addon/edit/matchtags");
+    require("codemirror/addon/edit/trailingspace");
+    require("codemirror/addon/edit/closetag");
+    require("codemirror/addon/edit/continuelist");
+    require("codemirror/addon/comment/comment");
+    require("codemirror/addon/fold/foldcode");
+    require("codemirror/addon/fold/foldgutter");
+    require("codemirror/addon/hint/show-hint");
+    require("codemirror/addon/hint/anyword-hint");
+    require("codemirror/addon/search/match-highlighter");
+    require("codemirror/addon/lint/lint");
+    require("codemirror/addon/lint/javascript-lint");
+
+    CodeMirror.commands.autocomplete = function(cm) {
+      cm.showHint({
+        hint: CodeMirror.hint.anyword
+      });
+    };
+
+    window.codeobj = CodeMirror.fromTextArea(
       document.getElementById('editor'), {
         mode: "javascript",
         theme: "solarized light",
         indentWithTabs: false,
         lineNumbers: true,
-        lineWrapping: true
+        lineWrapping: true,
+        smartIndent: true,
+        electricChars: true,
+        cursorScrollMargin: 5,
+        showMatchesOnScrollbar: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        matchTags: true,
+        showTrailingSpace: true,
+        autoCloseTags: true,
+        foldGutter: true,
+        showHint: true,
+        extraKeys: {
+          "Ctrl-Space": "autocomplete"
+        },
+        lint: CodeMirror.lint.javascript,
       });
+
+    const {
+      ipcRenderer,
+      webFrame,
+    } = require('electron');
+
+    webFrame.setZoomLevel(0.8);
+
+    ipcRenderer.on('open-file', function(event, args) {
+      const {
+        fileName,
+        data
+      } = args;
+      codeobj.getDoc().openedFileName = fileName;
+      codeobj.setValue(data);
+
+      if (fileName.endsWith('.js')) {
+        codeobj.setOption("mode", "javascript");
+      } else if (fileName.endsWith('.css')) {
+        codeobj.setOption("mode", "css");
+      } else if (fileName.endsWith('.java')) {
+        codeobj.setOption("mode", "text/x-java");
+      } else if (fileName.endsWith('.c')) {
+        codeobj.setOption("mode", "text/x-c");
+      } else if (fileName.endsWith('.h')) {
+        codeobj.setOption("mode", "text/x-c++hdr");
+      } else if (fileName.endsWith('.cpp')) {
+        codeobj.setOption("mode", "text/x-c++src");
+      } else {
+        codeobj.setOption("mode", "");
+      }
+    });
+
+    ipcRenderer.on('save-file', (event, args) => {
+      const fs = require('fs');
+      fs.writeFile(codeobj.getDoc().openedFileName, codeobj.getValue(), (err) => {
+        if (err) {
+          alert('Error saving file: ' + err.message);
+        }
+      })
+    });
   </script>
 
 </body>
